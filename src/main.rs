@@ -27,10 +27,20 @@ fn process_file(filename: &str) -> Option<(u16, u16, Vec<Vec<u8>>)> {
                 |line| line.split("").filter(
                     |c| c.len() > 0
                 ).map(
-                    |c| c.parse::<u8>().unwrap()
+                    |c| match c.parse::<u8>() {
+                        Ok(c) => c,
+                        Err(_) => 0
+                    }
                 ).collect()
             ).collect();
-            Some((cells[0].len() as u16, cells.len() as u16, cells))
+            let constant_width = cells.iter().all(
+                |line| line.len() == cells[0].len()
+            );
+            if constant_width {
+                Some((cells[0].len() as u16, cells.len() as u16, cells))
+            } else {
+                None
+            }
         }
     }
 }
@@ -67,21 +77,24 @@ fn main() {
     let iterations = matches.value_of("iterations").unwrap_or("10").parse::<u16>().unwrap();
     let size = matches.value_of("size").unwrap_or("1").parse::<u16>().unwrap();
 
-    let (width, height, cells) = process_file(filename).unwrap();
+    match process_file(filename) {
+        Some((width, height, cells)) => {
+            let world = World::new(width, height, size, cells);
+            let states = game(world, iterations);
 
-    let world = World::new(width, height, size, cells);
-    let states = game(world, iterations);
-
-    let color_map = &[0, 0, 0, 0xFF, 0xFF, 0xFF];
-    let mut image = File::create("conway.gif").unwrap();
-    let mut encoder = Encoder::new(&mut image, width * size, height * size, color_map).unwrap();
-    encoder.set(Repeat::Infinite).unwrap();
-    for state in states {
-        let mut frame = Frame::default();
-        frame.width = width * size;
-        frame.height = height * size;
-        frame.buffer = Cow::Borrowed(&state);
-        frame.delay = 20;
-        encoder.write_frame(&frame).unwrap();
-    }
+            let color_map = &[0, 0, 0, 0xFF, 0xFF, 0xFF];
+            let mut image = File::create("conway.gif").unwrap();
+            let mut encoder = Encoder::new(&mut image, width * size, height * size, color_map).unwrap();
+            encoder.set(Repeat::Infinite).unwrap();
+            for state in states {
+                let mut frame = Frame::default();
+                frame.width = width * size;
+                frame.height = height * size;
+                frame.buffer = Cow::Borrowed(&state);
+                frame.delay = 20;
+                encoder.write_frame(&frame).unwrap();
+            }
+        }
+        None => eprintln!("Cannot process the delivered file.")
+    };
 }
