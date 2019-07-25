@@ -36,8 +36,8 @@ impl World {
     }
 
     fn alive_neighbors(&self, x: u16, y: u16) -> u8 {
-        let x = x as i32;
-        let y = y as i32;
+        let x = i32::from(x);
+        let y = i32::from(y);
         let neighbors = [
             (x - 1, y - 1),
             (x, y - 1),
@@ -51,7 +51,7 @@ impl World {
         neighbors
             .iter()
             .filter(|(x, y)| {
-                *x >= 0 && *y >= 0 && *x < self.width() as i32 && *y < self.height() as i32
+                *x >= 0 && *y >= 0 && *x < i32::from(self.width()) && *y < i32::from(self.height())
             })
             .map(|(x, y)| self.cell(*x as u16, *y as u16))
             .sum()
@@ -81,12 +81,10 @@ impl World {
                             } else {
                                 0
                             }
+                        } else if old_alive_neighbors == 3 {
+                            1
                         } else {
-                            if old_alive_neighbors == 3 {
-                                1
-                            } else {
-                                0
-                            }
+                            0
                         }
                     })
                     .collect()

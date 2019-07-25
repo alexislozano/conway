@@ -22,11 +22,11 @@ fn process_file(filename: &str) -> Option<(u16, u16, Vec<Vec<u8>>)> {
         Err(_) => None,
         Ok(file) => {
             let cells: Vec<Vec<u8>> = file
-                .split("\n")
-                .filter(|line| line.len() > 0)
+                .split('\n')
+                .filter(|line| !line.is_empty())
                 .map(|line| {
                     line.split("")
-                        .filter(|c| c.len() > 0)
+                        .filter(|c| !c.is_empty())
                         .map(|c| match c.parse::<u8>() {
                             Ok(c) => c,
                             Err(_) => 0,
